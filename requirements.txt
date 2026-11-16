@@ -1,4 +1,5 @@
 streamlit #веб-інтерфейс застосунку (app.py)
 pandas #робота з даними НБУ(CSV, таблиці )
 matplotlib #для графіків
+pytest
 
