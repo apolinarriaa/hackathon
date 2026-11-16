@@ -66,4 +66,14 @@ def _require_game():
     if not _state:
         raise RuntimeError("Гру ще не розпочато — спершу виклич start_game()")
 
+def _current_index():
+    return _state["start_index"] + _state["day"]
+
+
+def is_finished():
+    _require_game()
+    return _state["day"] >= _state["duration"]
+
+
+
 
