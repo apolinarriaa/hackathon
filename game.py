@@ -36,3 +36,11 @@ def clean_rates(df):
   df = df.reindex(full_range).ffill()
   df.index.name = "date"
   return df.reset_index()[["date", "rate"]]
+
+def choose_start(rates, duration_days, rng=random):
+  """Випадковий старт: є історія для графіка, і всі duration_days + 1 курсів у 2020–2025."""
+  dates = rates["date"]
+  in_period = rates.index[(dates >= PERIOD_START) & (dates <= PERIOD_END)]
+  first = max(in_period[0], HISTORY_DAYS)
+  last = in_period[-1] - duration_days # для 7 прогнозів потрібно 8 курсів
+  return rng.randint(first, last)
