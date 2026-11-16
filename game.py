@@ -44,3 +44,19 @@ def choose_start(rates, duration_days, rng=random):
   first = max(in_period[0], HISTORY_DAYS)
   last = in_period[-1] - duration_days # для 7 прогнозів потрібно 8 курсів
   return rng.randint(first, last)
+
+
+def start_game(currency, duration_days, rng=random):
+    """Починає гру: зчитує курси, обирає випадковий період, ставить день 0."""
+    if duration_days not in DURATIONS:
+        raise ValueError(f"Тривалість має бути однією з {DURATIONS}")
+    rates = load_rates(currency)
+    _state.clear()
+    _state.update({
+        "currency": currency,
+        "duration": duration_days,
+        "rates": rates,
+        "start_index": choose_start(rates, duration_days, rng),
+        "day": 0,
+    })
+    return get_current_day()
