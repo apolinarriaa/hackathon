@@ -34,3 +34,18 @@ class Betting:
         self.balance += result
         self.balance = round(self.balance, 2)
         return self.balance
+
+    def add_to_history(self, amount, prediction, current_rate,
+                       next_rate, is_correct, result):
+
+        round_data = {
+            'amount': amount,
+            'prediction': prediction,
+            'current_rate': current_rate,
+            'next_rate': next_rate,
+            'is_correct': is_correct,
+            'result': result,
+            'balance_after': self.balance
+        }
+
+        self.history.append(round_data)
