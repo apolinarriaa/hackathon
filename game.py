@@ -75,5 +75,23 @@ def is_finished():
     return _state["day"] >= _state["duration"]
 
 
+def get_current_day():
+    """Поточна дата, курс, номер раунду та ознака завершення гри."""
+    _require_game()
+    row = _state["rates"].loc[_current_index()]
+    return {
+        "currency": _state["currency"],
+        "date": row["date"],
+        "rate": float(row["rate"]),
+        "round": min(_state["day"] + 1, _state["duration"]),
+        "total_rounds": _state["duration"],
+        "finished": is_finished(),
+    }
+
+
+
+
+
+
 
 
