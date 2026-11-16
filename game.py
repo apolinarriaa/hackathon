@@ -20,3 +20,20 @@ def load_rates(currency):
     df = df.sort_values("date")
     return clean_rates(df)
   
+
+def check_dates(df):
+    """Рахує повтори дат і пропущені календарні дні."""
+    duplicates = int(df["date"].duplicated().sum())
+    full_range = pd.date_range(df["date"].min(), df["date"].max(), freq="D")
+    missing = len(full_range) - df["date"].nunique()
+    return {"duplicates": duplicates, "missing": missing}
+
+
+def clean_rates(df):
+    """Прибирає повтори й заповнює пропущені дні останнім відомим курсом."""
+    df = df.drop_duplicates(subset="date", keep="last")
+    df = df.set_index("date")
+    full_range = pd.date_range(df.index.min(), df.index.max(), freq="D")
+    df = df.reindex(full_range).ffill()
+    df.index.name = "date"
+    return df.reset_index()[["date", "rate"]]
