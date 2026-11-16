@@ -4,6 +4,7 @@ class Betting:
     def __init__(self, balance):
         self.balance = balance
         self.initial_balance = balance
+        self.history = []
 
 
     def validate_bet(self, amount):
@@ -35,6 +36,7 @@ class Betting:
         self.balance = round(self.balance, 2)
         return self.balance
 
+    
     def add_to_history(self, amount, prediction, current_rate,
                        next_rate, is_correct, result):
 
