@@ -1,6 +1,7 @@
 import random
 from pathlib import Path
 import pandas as pd
+import streamlit as st
 DATA_DIR = Path(__file__).parent / "data"
 CURRENCY_FILES = {"USD": "usd.csv", "EUR": "eur.csv"}
 DURATIONS = (7, 14, 30)
@@ -8,13 +9,14 @@ HISTORY_DAYS = 30 # скільки днів до старту показуємо
 PERIOD_START = pd.Timestamp("2020-01-01")
 PERIOD_END = pd.Timestamp("2025-12-31")
 # Стан гри зберігається між натисканнями кнопок
-_state = {}
+def get_state():
+    return st.session_state.setdefault("game_state", {})
 
 
 def load_rates(currency):
   """Зчитує CSV валюти, перетворює дату, сортує й очищає дані."""
   if currency not in CURRENCY_FILES:
-  raise ValueError(f"Невідома валюта: {currency}")
+    raise ValueError(f"Невідома валюта: {currency}")
   df = pd.read_csv(DATA_DIR / CURRENCY_FILES[currency])
   df["date"] = pd.to_datetime(df["date"])
   df = df.sort_values("date")
@@ -51,8 +53,8 @@ def start_game(currency, duration_days, rng=random):
     if duration_days not in DURATIONS:
         raise ValueError(f"Тривалість має бути однією з {DURATIONS}")
     rates = load_rates(currency)
-    _state.clear()
-    _state.update({
+    get_state().clear()
+    get_state().update({
         "currency": currency,
         "duration": duration_days,
         "rates": rates,
@@ -63,32 +65,49 @@ def start_game(currency, duration_days, rng=random):
 
 
 def _require_game():
-    if not _state:
+    if not get_state():
         raise RuntimeError("Гру ще не розпочато — спершу виклич start_game()")
 
 def _current_index():
-    return _state["start_index"] + _state["day"]
+    return get_state()["start_index"] + get_state()["day"]
 
 
 def is_finished():
     _require_game()
-    return _state["day"] >= _state["duration"]
+    return get_state()["day"] >= get_state()["duration"]
 
 
 def get_current_day():
     """Поточна дата, курс, номер раунду та ознака завершення гри."""
     _require_game()
-    row = _state["rates"].loc[_current_index()]
+    row = get_state()["rates"].loc[_current_index()]
     return {
-        "currency": _state["currency"],
+        "currency": get_state()["currency"],
         "date": row["date"],
         "rate": float(row["rate"]),
-        "round": min(_state["day"] + 1, _state["duration"]),
-        "total_rounds": _state["duration"],
+        "round": min(get_state()["day"] + 1, get_state()["duration"]),
+        "total_rounds": get_state()["duration"],
         "finished": is_finished(),
     }
 
-if name == "__main__":
+def next_day():
+    """Відкриває наступний день і повертає старий та новий курс."""
+    if is_finished():
+        raise ValueError("Гру вже завершено.")
+    old_rate = get_current_day()["rate"]
+    get_state()["day"] += 1
+    new_rate = get_current_day()["rate"]
+    return old_rate, new_rate
+
+
+def get_history():
+    """Повертає лише історію до поточного відкритого дня."""
+    _require_game()
+    first = max(0, get_state()["start_index"] - HISTORY_DAYS)
+    last = _current_index() + 1
+    return get_state()["rates"].iloc[first:last].copy()
+
+if __name__ == "__main__":
     for code in CURRENCY_FILES:
         raw = pd.read_csv(DATA_DIR / CURRENCY_FILES[code], parse_dates=["date"])
         print(code, "перевірка:", check_dates(raw))
@@ -98,9 +117,3 @@ if name == "__main__":
     while not is_finished():
         print(next_day())
     print("Кінець:", get_current_day())
-
-
-
-
-
-

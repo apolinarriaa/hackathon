@@ -5,7 +5,7 @@
 |Васіліса Звонарьова |  Дані та логіка ігрових днів |  [game.py](game.py) |
 |Дмитро Шевчук | Інтерфейс програми |  [app.py](app.py) |
 |Ілля Радківський | Графіки та статистика |  [eur_charts.py](eur_charts.py), [usd_charts.py](asd_charts.py) |
-|Поліна Перегонцева | Інтеграція, гітхаб та тестування |  [test_game.py](test_game.py), [requirements.txt](requirements.txt) |
+|Поліна Перегонцева | Інтеграція, гітхаб та  тестування |  [test.py](test.py),  [requirements.txt](requirements.txt) |
 
 ## Як запустити
 
