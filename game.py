@@ -88,7 +88,16 @@ def get_current_day():
         "finished": is_finished(),
     }
 
+if name == "__main__":
+    for code in CURRENCY_FILES:
+        raw = pd.read_csv(DATA_DIR / CURRENCY_FILES[code], parse_dates=["date"])
+        print(code, "перевірка:", check_dates(raw))
 
+    print("Старт:", start_game("USD", 7))
+    print("Історія для графіка:", len(get_history()), "днів")
+    while not is_finished():
+        print(next_day())
+    print("Кінець:", get_current_day())
 
 
 
