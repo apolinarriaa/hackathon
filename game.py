@@ -60,3 +60,10 @@ def start_game(currency, duration_days, rng=random):
         "day": 0,
     })
     return get_current_day()
+
+
+def _require_game():
+    if not _state:
+        raise RuntimeError("Гру ще не розпочато — спершу виклич start_game()")
+
+
