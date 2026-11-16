@@ -1,4 +1,6 @@
-import streamlit as st
+﻿import streamlit as st
+from game import start_game
+from betting import Betting
 
 st.markdown(
     "<h1 style='text-align: center;'>Choose the currency</h1>",
@@ -40,7 +42,19 @@ duration_days = st.selectbox(
 )
 st.session_state.duration_days = duration_days
 
+if button_usdt or button_eur:
+    currency = "USD" if button_usdt else "EUR"
+    try:
+        start_game(currency, duration_days)
+    except (ValueError, OSError) as error:
+        st.error(str(error))
+        st.stop()
+    st.session_state.betting = Betting(balance)
+    st.session_state.pop("stake", None)
+    st.session_state.pop("prediction", None)
+
 if button_usdt:
     st.switch_page("pages/usd.py")
 if button_eur:
     st.switch_page("pages/euro.py")
+

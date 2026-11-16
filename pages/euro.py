@@ -1,8 +1,6 @@
 ﻿import streamlit as st
-
-if st.session_state.get("currency") != "EUR":
-    st.session_state.pop("prediction", None)
-st.session_state.currency = "EUR"
+from game import get_current_day, get_history, next_day, is_finished
+from eur_charts import create_chart
 
 st.markdown("""
 <style>
@@ -39,23 +37,33 @@ st.markdown(
     unsafe_allow_html=True)
 
 
-# Тут підключається графік із charts.py.
-# Назву create_chart замініть на назву функції учасника №4.
-# from charts import create_chart
+if "game_state" not in st.session_state or "betting" not in st.session_state:
+    st.info("Спочатку почніть гру на головній сторінці.")
+    if st.button("Back", key="back_btn"):
+        st.switch_page("app.py")
+    st.stop()
 
-chart_place = st.empty()
-chart_place.info("Тут буде графік курсу EUR")
+current = get_current_day()
+if current["currency"] != "EUR":
+    st.info("Оберіть EUR на головній сторінці.")
+    if st.button("Back", key="back_btn"):
+        st.switch_page("app.py")
+    st.stop()
 
-# Коли функція буде готова:
-# chart = create_chart(...)
-# chart_place.plotly_chart(chart)
-
+betting = st.session_state.betting
+st.write(f"Раунд {current['round']} із {current['total_rounds']}")
+st.metric("Поточний курс", f"{current['rate']:.4f} грн")
+st.plotly_chart(create_chart(get_history()))
 st.divider()
+st.metric("Баланс (грн)", f"{betting.balance:.2f}")
 
-if "balance" not in st.session_state:
-    st.session_state.balance = 1000
-
-st.metric("Баланс (грн)", f"{st.session_state.balance:.2f}")
+if betting.history:
+    last = betting.history[-1]
+    message = f"{last['current_rate']:.4f} → {last['next_rate']:.4f} грн. Результат ставки: {last['result']:+.2f} грн."
+    if last["is_correct"]:
+        st.success("Правильно! " + message)
+    else:
+        st.error("Неправильно. " + message)
 
 stake = st.number_input(
     "Сума ставки (грн)",
@@ -63,31 +71,40 @@ stake = st.number_input(
     value=0.0,
     step=10.0,
     key="stake",
+    disabled=is_finished(),
 )
 
 column1, column2 = st.columns(2)
-
 with column1:
-    button_up = st.button("Виросте", key="up_btn", width="stretch")
-
+    button_up = st.button("Виросте", key="up_btn", width="stretch", disabled=is_finished())
 with column2:
-    button_not_up = st.button("Не виросте", key="not_up_btn", width="stretch")
+    button_not_up = st.button("Не виросте", key="not_up_btn", width="stretch", disabled=is_finished())
 
 if button_up or button_not_up:
-    if not 0 < stake <= st.session_state.balance:
+    if not betting.validate_bet(stake):
         st.error("Ставка має бути більшою за нуль і не перевищувати баланс.")
     else:
-        if button_up:
-            st.session_state.prediction = "Виросте"
-        else:
-            st.session_state.prediction = "Не виросте"
+        prediction = "up" if button_up else "not_up"
+        old_rate, new_rate = next_day()
+        correct = betting.check_prediction(old_rate, new_rate, prediction)
+        result = betting.calculate_result(stake, correct)
+        st.session_state.balance = betting.update_balance(result)
+        betting.add_to_history(stake, prediction, old_rate, new_rate, correct, result)
+        st.rerun()
 
-if "prediction" in st.session_state:
-    st.write("Прогноз:", st.session_state.prediction)
-    st.write("Ставка:", stake, "грн")
+if is_finished():
+    st.subheader("Гру завершено")
+    profit = betting.balance - betting.initial_balance
+    correct_count = sum(item["is_correct"] for item in betting.history)
+    st.write(f"Початковий баланс: {betting.initial_balance:.2f} грн")
+    st.write(f"Кінцевий баланс: {betting.balance:.2f} грн")
+    st.write(f"Прибуток / збиток: {profit:+.2f} грн")
+    st.write(f"Прибутковість: {profit / betting.initial_balance:+.1%}")
+    st.write(f"Правильних прогнозів: {correct_count} із {len(betting.history)}")
+    if st.button("Нова гра"):
+        st.session_state.pop("game_state", None)
+        st.session_state.pop("betting", None)
+        st.switch_page("app.py")
 
 if st.button("Back", key="back_btn"):
     st.switch_page("app.py")
-
-
-
